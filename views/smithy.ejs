@@ -1,0 +1,7 @@
+<%- include('partials/head', { title: '대장간' }) %>
+<%# 팝업이 안 될 때(자바스크립트 꺼짐 등) 쓰는 전체 화면 대장간 — 내용은 partials/smithy_panel 과 같음 %>
+<section class="smithy-page">
+  <%- include('partials/smithy_panel', { c: c, game: game, info: info, line: line, msg: msg, back: '' }) %>
+  <p><a class="button" href="/play/<%= c.id %>">돌아가기</a></p>
+</section>
+<%- include('partials/foot') %>

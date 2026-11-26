@@ -1,0 +1,47 @@
+<%# 대장간 창 (팝업·전체 화면 공통) — 왼쪽: 배경 + 대장장이 + 대사 / 오른쪽: 두루마리 품목 %>
+<% var w = info.weapon; var back = typeof back !== 'undefined' ? back : ''; %>
+<div class="smithy-panel" data-smithy-panel>
+  <button type="button" class="smithy-close" data-modal-close aria-label="닫기">×</button>
+  <div class="smithy-scene">
+    <img class="smithy-npc" src="/img/blacksmith.png" alt="" onerror="this.hidden=true">
+    <div class="smithy-say">
+      <p class="smithy-who"><%= game.C.SMITHY.name || '대장장이' %></p>
+      <p class="smithy-line"><%= line %></p>
+      <% if (msg) { %><p class="smithy-msg <%= msg.error ? 'warn' : '' %>"><%= msg.text %></p><% } %>
+    </div>
+  </div>
+  <div class="smithy-scroll">
+    <div class="smithy-scroll-head">
+      <b>대장간</b>
+      <span class="smithy-gold">보유 <%= c.gold %>골드</span>
+    </div>
+    <p class="small muted smithy-note">칸마다 마지막으로 산 장비 하나만 장착돼요 · 시간은 지나지 않아요</p>
+    <div class="smithy-list">
+      <p class="smithy-group">무기 강화</p>
+      <form method="post" action="/play/<%= c.id %>/smithy/upgrade" class="smithy-row">
+        <input type="hidden" name="back" value="<%= back %>">
+        <div class="smithy-item">
+          <b><%= w.name %><% if (w.level) { %> <span class="smithy-plus">+<%= w.level %></span><% } %></b>
+          <span class="small muted">강화 <%= w.level %> / <%= w.max %> · 1강마다 공격력 +<%= w.atk %></span>
+          <span class="small">공격력 <%= Math.round(w.power * 10) / 10 %><% if (!w.maxed) { %> → <%= Math.round((w.power + w.atk) * 10) / 10 %><% } %></span>
+        </div>
+        <button class="smithy-buy" <%= (w.maxed || c.gold < w.price) ? 'disabled' : '' %>><%= w.maxed ? '최대' : w.price + 'G' %></button>
+      </form>
+      <% info.groups.forEach(function (g) { %>
+        <p class="smithy-group"><%= g.name %> <span class="muted small">· 지금 <%= g.current ? g.current.name : '없음' %></span></p>
+        <% g.items.forEach(function (it) { %>
+          <form method="post" action="/play/<%= c.id %>/smithy/buy" class="smithy-row<%= it.equipped ? ' equipped' : '' %>">
+            <input type="hidden" name="back" value="<%= back %>">
+            <input type="hidden" name="item" value="<%= it.id %>">
+            <div class="smithy-item">
+              <b><%= it.name %><% if (it.job) { %> <span class="small muted"><%= it.job %> 전용</span><% } %></b>
+              <span class="small smithy-desc">'<%= it.desc %>'</span>
+              <span class="small"><%= it.stat %></span>
+            </div>
+            <button class="smithy-buy" <%= (it.equipped || c.gold < it.price) ? 'disabled' : '' %>><%= it.equipped ? '장착 중' : it.price + 'G' %></button>
+          </form>
+        <% }) %>
+      <% }) %>
+    </div>
+  </div>
+</div>

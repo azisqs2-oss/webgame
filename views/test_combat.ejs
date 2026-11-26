@@ -1,0 +1,26 @@
+<%- include('partials/head', { title: '테스트 전투' }) %>
+<section class="story test-page">
+  <p class="eyebrow">테스트 · 저장 안 함 · <%= tc.job %> (능력치 <%= tc.str %>)<%= rescueNow ? ' · HP 1 (난입 바로 보기)' : '' %></p>
+  <div class="actions card" id="actions">
+    <div class="combat" id="combat">
+      <canvas id="combatCanvas" width="720" height="420" aria-label="전투 화면"></canvas>
+      <div class="combat-overlay" id="combatOverlay">
+        <p class="combat-title"><%= combat.enemy.name %></p>
+        <p class="small">체력 <%= combat.enemy.hp %> · 공격 <%= combat.attacks.length %>번</p>
+        <p class="small" id="combatKeyNote" hidden>원 가운데 적힌 <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> 중 그 키를 눌러 막아요.</p>
+        <div class="mode-pick" role="group" aria-label="조작 방식">
+          <button type="button" class="mode on" data-mode="click" aria-pressed="true">클릭 · 터치</button>
+          <button type="button" class="mode" data-mode="key" aria-pressed="false">키보드 (QWER)</button>
+          <button type="button" class="mode sfx-toggle" data-sfx-toggle aria-pressed="true">🔊 효과음 켜짐</button>
+        </div>
+        <button type="button" class="primary" id="combatStart">전투 시작</button>
+      </div>
+    </div>
+    <form method="post" action="/test/combat/result" id="combatForm"><input type="hidden" name="offsets" id="combatOffsets"></form>
+    <script id="combatPlan" type="application/json"><%- JSON.stringify(combat).replace(/</g, '\\u003c') %></script>
+    <script src="/sfx.js"></script>
+    <script src="/combat.js"></script>
+  </div>
+  <p><a href="<%= back ? '/test/scene/' + back : '/test' %>">← 돌아가기</a></p>
+</section>
+<%- include('partials/foot') %>

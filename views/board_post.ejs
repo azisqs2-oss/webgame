@@ -1,0 +1,37 @@
+<%- include('partials/head', { title: post.title }) %>
+<%- include('partials/board_nav', { back: '/board/' + post.id }) %>
+
+<article class="card">
+  <p class="eyebrow"><a href="/board?b=<%= boardKey %>"><%= BOARDS[boardKey].name %></a></p>
+  <h1><%= post.title %></h1>
+  <div class="post-meta"><%- include('partials/author', { row: post }) %><span class="muted small"><%= new Date(post.created_at).toLocaleString('ko-KR') %></span></div>
+  <div class="post-body"><%= post.body %></div>
+  <% if (post.author_user === me) { %>
+    <form method="post" action="/board/<%= post.id %>/delete" class="right" onsubmit="return confirm('이 글을 지울까요?')">
+      <input type="hidden" name="board" value="<%= boardKey %>">
+      <button class="link danger-link">글 삭제</button>
+    </form>
+  <% } %>
+</article>
+
+<section class="card" id="comments">
+  <p class="eyebrow">댓글 <%= comments.length %></p>
+  <% comments.forEach(function (row) { %>
+    <div class="comment">
+      <div class="post-meta"><%- include('partials/author', { row: row }) %><span class="muted small"><%= fmtTime(row.created_at) %></span>
+        <% if (row.author_user === me) { %>
+          <form method="post" action="/comments/<%= row.id %>/delete" class="inline"><button class="link danger-link small">삭제</button></form>
+        <% } %>
+      </div>
+      <p class="comment-body"><%= row.body %></p>
+    </div>
+  <% }) %>
+
+  <% if (activeCharacter) { %>
+    <form method="post" action="/board/<%= post.id %>/comments" class="comment-form">
+      <textarea name="body" required maxlength="500" rows="2" placeholder="<%= activeCharacter.name %>(으)로 댓글 달기"></textarea>
+      <button class="primary">등록</button>
+    </form>
+  <% } %>
+</section>
+<%- include('partials/foot') %>

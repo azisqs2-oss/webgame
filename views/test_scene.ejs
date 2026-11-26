@@ -1,0 +1,56 @@
+<%- include('partials/head', { title: '테스트 장면' }) %>
+<%# 장면 미리보기 — 판정 없이 고른 선택지의 결과 문장과 다음 장면을 보여 줌. 저장 안 함 %>
+<section class="story test-page">
+  <p class="eyebrow">테스트 · 저장 안 함 · <%= ev.title || ev.id %> <span class="muted">(<%= ev.id %>)</span></p>
+  <div class="log" id="log">
+    <% var usesFx = false; lines.forEach(function (l) {
+         var body = String(l.text).replace(/\{비주얼노벨:[^}]*\}/g, '').replace(/\{연출:(합|태양)\}/g, function (all, k) { usesFx = true; return k === '합' ? '' : ''; }); %>
+      <p class="line <%= l.kind === 'event' ? 'event' : l.kind === 'choice' ? 'choice' : 'story' %> new"><%= body %></p>
+    <% }) %>
+  </div>
+  <div class="speed-bar" id="speedBar">
+    <span class="small muted">글 속도</span>
+    <button type="button" data-speed="1">1×</button><button type="button" data-speed="2">2×</button><button type="button" data-speed="3">3×</button><button type="button" data-speed="4">4×</button>
+  </div>
+  <div class="actions card" id="actions">
+    <% if (vn) { %>
+      <div class="vn" id="vn">
+        <div class="vn-bg"></div><div class="vn-bg vn-bg-next"></div>
+        <div class="vn-char"></div>
+        <div class="vn-shade"></div>
+        <div class="vn-box narration"><p class="vn-name" hidden></p><p class="vn-text"></p><span class="vn-more" hidden>▼</span></div>
+        <div class="vn-choices" hidden></div>
+        <button type="button" class="primary vn-start">이야기 듣기</button>
+        <% if (vn.errors.length) { %><p class="vn-errors"><%= vn.errors.join(' · ') %></p><% } %>
+      </div>
+      <script type="application/json" id="vnScript"><%- JSON.stringify({ ops: vn.ops, labels: vn.labels }).replace(/</g, '\\u003c') %></script>
+      <p class="small muted vn-help">클릭 · 스페이스 · 엔터로 넘겨요.</p>
+    <% } %>
+    <div id="vnChoices" <%= vn ? 'hidden' : '' %>>
+      <% if (ev.combat) { %>
+        <p><a class="button primary" href="/test/combat/<%= ev.combat %>?back=<%= ev.id %>">전투 미리보기 · <%= (C.COMBAT.enemies[ev.combat] || {}).name || ev.combat %></a>
+        <% if ((C.COMBAT.enemies[ev.combat] || {}).rescue) { %><a class="button" href="/test/combat/<%= ev.combat %>?rescue=1&back=<%= ev.id %>">난입 바로 보기</a><% } %></p>
+      <% } %>
+      <p class="small muted"><%= ev.combat ? '전투 뒤 이어지는 장면' : '선택지 (판정 없이 성공으로 봄)' %></p>
+      <div class="stack">
+        <% choices.forEach(function (ch) {
+             var label = ch.auto ? (ev.combat ? (ch.i === 0 ? '이겼을 때 / 난입' : '졌을 때') : '이어서') : ch.text; %>
+          <% if (!ch.go.length) { %>
+            <a class="choice" href="/test/scene/<%= ev.id %>?from=<%= ev.id %>&pick=<%= ch.i %>"><span><%= label %></span><span class="small muted">결과만 보기 (이어지는 장면 없음)</span></a>
+          <% } %>
+          <% ch.go.forEach(function (g) { %>
+            <a class="choice" href="/test/scene/<%= g.to %>?from=<%= ev.id %>&pick=<%= ch.i %>"><span><%= label %></span><span class="small muted"><%= g.label ? g.label + ' → ' : '→ ' %><%= g.to %></span></a>
+          <% }) %>
+          <% if (ch.stat && ch.fail) { %>
+            <a class="choice" href="/test/scene/<%= ch.go.length ? ch.go[ch.go.length - 1].to : ev.id %>?from=<%= ev.id %>&pick=<%= ch.i %>&fail=1"><span><%= label %></span><span class="small warn">판정 실패 결과 보기</span></a>
+          <% } %>
+        <% }) %>
+      </div>
+      <p class="small"><a href="/test">← 테스트 처음으로</a></p>
+    </div>
+  </div>
+</section>
+<% if (usesFx || vn) { %><script src="/sfx.js"></script><script src="/storyfx.js"></script><% } %>
+<% if (vn) { %><script src="/vn.js" defer></script><% } %>
+<script src="/typewriter.js"></script>
+<%- include('partials/foot') %>

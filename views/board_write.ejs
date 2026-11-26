@@ -1,0 +1,20 @@
+<%- include('partials/head', { title: '글쓰기' }) %>
+<%- include('partials/board_nav', { back: '/board/write?b=' + boardKey }) %>
+
+<section class="card">
+  <p class="eyebrow"><%= BOARDS[boardKey].name %> · <%= activeCharacter.name %>(으)로 글쓰기</p>
+  <form method="post" action="/board" class="stack">
+    <input type="hidden" name="board" value="<%= boardKey %>">
+    <label>제목
+      <input name="title" required maxlength="80" placeholder="<%= boardKey === 'quest' ? '예: 봄 약초꾼 호위 같이 갈 사냥꾼 구해요' : '예: 오늘 장터에서 들은 소문' %>">
+    </label>
+    <label>내용
+      <textarea name="body" required maxlength="5000" rows="10" placeholder="캐릭터의 말투로 적어 보세요."></textarea>
+    </label>
+    <div class="row">
+      <a class="button" href="/board?b=<%= boardKey %>">취소</a>
+      <button class="primary">올리기</button>
+    </div>
+  </form>
+</section>
+<%- include('partials/foot') %>

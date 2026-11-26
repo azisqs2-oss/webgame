@@ -1,0 +1,19 @@
+<%- include('partials/head', { title: mode === 'login' ? '로그인' : '회원가입' }) %>
+<section class="card narrow">
+  <p class="eyebrow">텍스트 판타지 RPG</p>
+  <h1><%= mode === 'login' ? '다시 돌아오셨군요' : '새 모험가 등록' %></h1>
+  <form method="post" action="/<%= mode %>" class="stack">
+    <label>아이디
+      <input name="login_id" required maxlength="20" autocomplete="username" placeholder="영문·숫자 4~20자">
+    </label>
+    <label>비밀번호
+      <input name="password" type="password" required autocomplete="<%= mode === 'login' ? 'current-password' : 'new-password' %>">
+    </label>
+    <button class="primary"><%= mode === 'login' ? '로그인' : '가입하기' %></button>
+  </form>
+  <p class="muted small">
+    <% if (mode === 'login') { %>처음이신가요? <a href="/signup">회원가입</a>
+    <% } else { %>이미 계정이 있나요? <a href="/login">로그인</a><% } %>
+  </p>
+</section>
+<%- include('partials/foot') %>

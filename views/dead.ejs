@@ -1,0 +1,9 @@
+<%- include('partials/head', { title: '사망' }) %>
+<section class="card narrow center">
+  <p class="eyebrow">부고</p>
+  <h1><%= death.name %></h1>
+  <p><%= death.text %></p>
+  <p class="muted small">캐릭터가 삭제되어 슬롯이 비워졌습니다.</p>
+  <a class="button primary" href="/slots">슬롯으로</a>
+</section>
+<%- include('partials/foot') %>

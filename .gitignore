@@ -1,0 +1,11 @@
+node_modules/
+.env
+
+# 배포 묶음 · 키 파일
+*.tgz
+*.pem
+
+# 내부 메모 — 깃허브에 안 올림 (사용자 지시 2026-11-27)
+CLAUDE.md
+README.md
+dfc.txt

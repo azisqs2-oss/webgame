@@ -1,0 +1,9 @@
+<%# 글쓴이 표시: 이름(프로필 링크) + 직업·등급. row 에 author_* 값이 있어야 함 %>
+<span class="author">
+  <% if (row.character_id && !row.author_gone) { %>
+    <a href="/profile/<%= row.character_id %>" class="author-name"><%= row.author_name %></a>
+  <% } else { %>
+    <span class="author-name gone"><%= row.author_gone === '故' ? '(故) ' : '' %><%= row.author_name %></span>
+  <% } %>
+  <span class="author-tag"><%= authorLabel(row) %></span>
+</span>

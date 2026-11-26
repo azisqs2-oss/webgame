@@ -1,0 +1,103 @@
+<%- include('partials/head', { title: '데이터 확인' }) %>
+<h1>데이터 확인</h1>
+<p class="muted">서버가 <b>data/choices.csv</b>, <b>story.csv</b>, <b>npcs.csv</b>, <b>items.csv</b>를 읽은 결과입니다. 파일을 고치고 저장한 뒤 이 페이지를 새로고침하면 바로 반영돼요.
+  (마지막으로 읽은 시각: <%= data.loadedAt.toLocaleString('ko-KR') %>)</p>
+
+<% if (data.warnings.length) { %>
+  <div class="warn-box">
+    <b class="warn">확인이 필요한 곳 <%= data.warnings.length %>개</b>
+    <ul><% data.warnings.forEach(function (w) { %><li><%= w %></li><% }) %></ul>
+  </div>
+<% } else { %>
+  <div class="ok-box">문제 없이 읽었어요.</div>
+<% } %>
+
+<%
+  var groups = ['메인스토리', '성장', '소소', '계절', '특별의뢰', '연결'];
+  function rankLabel(e) { var j = C.JOBS.find(function (x) { return x.name === e.job; }); return j ? (j.ranks[e.minRank] || e.minRank) : e.minRank; }
+  var all = Array.from(data.events.values());
+  function rewardText(ch) {
+    var parts = [];
+    var eff = game.describeEffects(ch.effects); if (eff) parts.push(eff);
+    if (ch.gold) parts.push('골드 ' + (ch.gold > 0 ? '+' : '') + ch.gold);
+    if (ch.fatigue) parts.push('피로 ' + (ch.fatigue > 0 ? '+' : '') + ch.fatigue);
+    if (ch.hp) parts.push('HP ' + (ch.hp > 0 ? '+' : '') + ch.hp);
+    if (ch.record) parts.push('칭호 「' + ch.record + '」');
+    return parts.join(', ');
+  }
+  function failText(ch) {
+    if (!ch.stat) return '';
+    var parts = [];
+    if (ch.failGold) parts.push('골드 ' + (ch.failGold > 0 ? '+' : '') + ch.failGold);
+    if (ch.failFatigue) parts.push('피로 ' + (ch.failFatigue > 0 ? '+' : '') + ch.failFatigue);
+    if (ch.deathRate) parts.push('사망 ' + ch.deathRate + '%');
+    return parts.join(', ');
+  }
+%>
+<% var titled = all.filter(function (e) { return e.choices.some(function (ch) { return ch.record; }); }); %>
+<h2>칭호를 주는 이벤트 <span class="muted small"><%= titled.length %>개</span></h2>
+<% if (!titled.length) { %><p class="muted small">아직 없어요. choices.csv 의 <b>칭호</b> 칸에 이름을 적으면 그 선택지를 성공했을 때 칭호를 얻어요.</p><% } else { %>
+  <ul class="small"><% titled.forEach(function (e) { e.choices.filter(function (ch) { return ch.record; }).forEach(function (ch) { %>
+    <li><b>「<%= ch.record %>」</b> — <code><%= e.id %></code> <%= e.title %> · <%= e.seasonName %> · <%= e.minAge %>~<%= e.maxAge === 999 ? '' : e.maxAge %>세 · <%= ch.text %><%= ch.stat ? ' (' + game.statName(ch.stat) + ' ' + ch.difficulty + ')' : '' %></li>
+  <% }) }) %></ul>
+<% } %>
+
+<% groups.forEach(function (g) { var list = all.filter(function (e) { return e.type === g; }); %>
+  <h2><%= g === '특별의뢰' ? '특별 의뢰' : g === '메인스토리' ? '메인 스토리 (story.csv)' : g === '소소' ? '소소한 이벤트 (성장기 1년에 여러 개)' : g + ' 이벤트' %> <span class="muted small"><%= list.length %>개</span></h2>
+  <div class="table-wrap">
+  <table class="data-table">
+    <thead><tr>
+      <th>ID</th><th><%= (g === '성장' || g === '소소') ? '나이' : g === '메인스토리' ? '직업·등급·순서' : '계절·등급' %></th><th>제목 / 문장</th><th>선택지</th><th>판정</th><th>성공 시</th><th>실패 시</th>
+    </tr></thead>
+    <tbody>
+    <% if (!list.length) { %><tr><td colspan="7" class="muted">아직 없어요.</td></tr><% } %>
+    <% list.forEach(function (e) { e.choices.forEach(function (ch, i) { %>
+      <tr class="<%= i === 0 ? 'first' : '' %>">
+        <% if (i === 0) { %>
+          <td rowspan="<%= e.choices.length %>"><code><%= e.id %></code></td>
+          <td rowspan="<%= e.choices.length %>"><%= g === '메인스토리' ? e.job + ' · ' + (e.kind === 'age' ? e.storyAge + '세에 시작' : e.kind === 'rank' ? rankLabel(e) + ' · ' + e.order + '장' : '연결 장면') : (e.job ? e.job + ' 전용 · ' : '') + ((g === '성장' || g === '소소') ? e.minAge + '~' + e.maxAge + '세' : e.seasonName + ' · 등급 ' + e.minRank + '+' + ((e.minAge || e.maxAge !== 999) ? ' · ' + e.minAge + '~' + (e.maxAge === 999 ? '' : e.maxAge) + '세' : '')) %></td>
+          <td rowspan="<%= e.choices.length %>"><b><%= e.title %></b><% if (e.combat) { %> <span class="warn small">전투: <%= (C.COMBAT.enemies[e.combat] || {}).name || e.combat %></span><% } %><% if (e.npc) { var nn = data.npcs.get(e.npc); %> <span class="npc-name small"><%= nn ? nn.name : e.npc %></span><% } %><br><span class="muted"><%= e.text %></span></td>
+        <% } %>
+        <td><%= ch.text %></td>
+        <td><%= ch.stat ? game.statName(ch.stat) + ' ' + ch.difficulty : '-' %></td>
+        <td><%= ch.success %><br><span class="muted"><%= rewardText(ch) %><% if (ch.affinity) { %> · 호감도 <%= ch.affinity > 0 ? '+' : '' %><%= ch.affinity %><% } %><% if (ch.routine) { %> · 일상 「<%= ch.routine %>」<% } %></span><% if (ch.next || ch.branch) { %><br><span class="small">→ <% if (ch.branch) { ch.branch.cases.forEach(function (k) { %><%= ch.branch.npc %> <%= k.min %>↑ <code><%= k.to %></code> / <% }) %>그 외 <% } %><code><%= ch.next %></code></span><% } %></td>
+        <td><%= ch.fail %><br><span class="muted"><%= failText(ch) %></span></td>
+      </tr>
+    <% }) }) %>
+    </tbody>
+  </table>
+  </div>
+<% }) %>
+
+<h2>핵심 NPC (npcs.csv) <span class="muted small"><%= data.npcs.size %>명</span></h2>
+<div class="table-wrap">
+<table class="data-table">
+  <thead><tr><th>ID</th><th>이름</th><th>마을</th><th>직업</th><th>역할</th><th>소개</th></tr></thead>
+  <tbody>
+  <% if (!data.npcs.size) { %><tr><td colspan="6" class="muted">아직 없어요.</td></tr><% } %>
+  <% data.npcs.forEach(function (n) { %>
+    <tr><td><code><%= n.id %></code></td><td><b><%= n.name %></b></td><td><%= n.village %></td><td><%= n.job %></td><td><%= n.role %></td><td class="muted"><%= n.desc %></td></tr>
+  <% }) %>
+  </tbody>
+</table>
+</div>
+
+<h2>상점 아이템 <span class="muted small"><%= data.items.length %>개</span></h2>
+<div class="table-wrap">
+<table class="data-table">
+  <thead><tr><th>ID</th><th>이름</th><th>가격</th><th>효과</th><th>계절당 한도</th><th>최소등급</th></tr></thead>
+  <tbody>
+  <% data.items.forEach(function (it) { %>
+    <tr>
+      <td><code><%= it.id %></code></td>
+      <td><b><%= it.name %></b><br><span class="muted"><%= it.desc %></span></td>
+      <td><%= it.price %></td>
+      <td><%= [game.describeEffects(it.effects), it.fatigue ? '피로 ' + (it.fatigue > 0 ? '+' : '') + it.fatigue : ''].filter(Boolean).join(', ') %></td>
+      <td><%= it.limit || '무제한' %></td>
+      <td><%= it.minRank %></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+</div>
+<%- include('partials/foot') %>

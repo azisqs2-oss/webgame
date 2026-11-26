@@ -1,0 +1,8 @@
+<%- include('partials/head', { title: '오류' }) %>
+<section class="card narrow">
+  <h1>문제가 생겼어요</h1>
+  <p><%= message %></p>
+  <% if (typeof detail !== 'undefined' && detail) { %><pre class="err-detail"><%= detail %></pre><% } %>
+  <a class="button" href="/">처음으로</a>
+</section>
+<%- include('partials/foot') %>

@@ -1,0 +1,432 @@
+<%- include('partials/head', { title: c.name }) %>
+<%
+  var maxStat = Math.max(100, c.str, c.intel, c.agi, c.cha); // 능력치 막대 기준 100 (넘으면 그 값 기준)
+  var records = game.csv(c.records);
+%>
+<div class="play">
+  <!-- 왼쪽: 캐릭터 정보 -->
+  <aside class="panel">
+    <section class="card tight p-top">
+      <h2><%= c.name %></h2>
+      <p class="muted small"><%= c.gender %> · <%= c.origin %> 출신</p>
+      <p class="small"><%= game.csv(c.tags).join(' · ') %></p>
+      <% if (c.intro) { %><p class="small muted">“<%= c.intro %>”</p><% } %>
+      <a class="small mobile-only" href="/profile/<%= c.id %>">내 프로필 보기</a>
+    </section>
+
+    <section class="card tight p-top">
+      <p class="eyebrow">시간</p>
+      <p class="big"><%= game.timeLabel(c) %></p>
+      <% if (c.phase === 'adult') { %><p class="muted small"><%= c.age %>세 · <%= C.CAPITAL.name %>에서 지내는 중</p>
+      <% } else { %><p class="muted small"><%= c.origin %>에서 자라는 중</p><% } %>
+      <% if (c.routine) { %><p class="small routine">매년 · <%= c.routine %></p><% } %>
+    </section>
+
+    <section class="card tight p-top">
+      <p class="eyebrow">직업</p>
+      <% if (c.phase === 'adult' && c.job) { %>
+        <p class="big"><%= c.job %> · <%= game.rankName(c) %></p>
+      <% } else if (c.job) { %>
+        <p class="big"><%= c.job %> <span class="muted small">견습 전</span></p>
+        <p class="muted small"><%= c.origin %>에서 자라는 중</p>
+      <% } else { %>
+        <p class="big">아직 없음</p>
+      <% } %>
+    </section>
+
+    <section class="card tight p-top">
+      <% var hpNow = game.curHp(c), hpMax = game.maxHp(c); %>
+      <div class="stat">
+        <div class="stat-head"><span>HP</span><b class="<%= hpNow <= hpMax * 0.3 ? 'warn' : '' %>"><%= hpNow %> / <%= hpMax %></b></div>
+        <div class="bar hp-bar"><div class="fill hp" style="width: <%= Math.round(hpNow / hpMax * 100) %>%"></div></div>
+      </div>
+      <% var statFx = game.statEffects(c); %>
+      <% C.STATS.forEach(function (s, i) { %>
+        <div class="stat">
+          <div class="stat-head"><span><%= s.name %></span><b><% if (statDelta[s.key]) { %><span class="stat-delta <%= statDelta[s.key] < 0 ? 'down' : '' %>"><%= statDelta[s.key] > 0 ? '+' : '' %><%= statDelta[s.key] %></span><% } %><%= c[s.key] %></b></div>
+          <div class="bar"><div class="fill c<%= i %>" style="width: <%= Math.round(c[s.key] / maxStat * 100) %>%"></div></div>
+          <% if (statFx[s.key]) { %><p class="stat-fx"><%= statFx[s.key] %></p><% } %>
+        </div>
+      <% }) %>
+      <% C.MAGIC_STATS.forEach(function (s) { if (c[s.key]) { %>
+        <div class="stat">
+          <div class="stat-head"><span><%= s.name %></span><b><% if (statDelta[s.key]) { %><span class="stat-delta <%= statDelta[s.key] < 0 ? 'down' : '' %>"><%= statDelta[s.key] > 0 ? '+' : '' %><%= statDelta[s.key] %></span><% } %><%= c[s.key] %></b></div>
+          <div class="bar"><div class="fill mana" style="width: <%= Math.min(100, Math.round(c[s.key] / maxStat * 100)) %>%"></div></div>
+          <% if (statFx[s.key]) { %><p class="stat-fx"><%= statFx[s.key] %></p><% } %>
+        </div>
+      <% } }) %>
+      <% if (c.phase === 'adult') { %>
+        <div class="stat">
+          <div class="stat-head"><span>피로도</span><b class="<%= c.fatigue >= C.FATIGUE.questLimit ? 'warn' : '' %>"><%= c.fatigue %> / <%= C.FATIGUE.max %></b></div>
+          <div class="bar"><div class="fill fatigue" style="width: <%= c.fatigue %>%"></div></div>
+        </div>
+      <% } %>
+      <div class="stat-head"><span>골드</span><b><%= c.gold %></b></div>
+    </section>
+
+    <section class="card tight p-plaza">
+      <p class="eyebrow">마을 광장</p>
+      <div class="row tight">
+        <a class="button small-btn" href="/board?b=free">자유게시판</a>
+        <a class="button small-btn" href="/board?b=quest">의뢰게시판</a>
+      </div>
+      <a class="small" href="/profile/<%= c.id %>">내 프로필 보기</a>
+    </section>
+
+    <% if (metNpcs.length) { %>
+    <section class="card tight p-bottom">
+      <p class="eyebrow">인물</p>
+      <% metNpcs.forEach(function (n) { %>
+        <div class="stat-head npc-row"><span><%= n.name %><% if (n.role) { %> <span class="muted small"><%= n.role %></span><% } %></span><% if (!n.noAffinity) { %><b title="호감도">♥ <%= n.aff %></b><% } %></div>
+      <% }) %>
+    </section>
+    <% } %>
+
+    <section class="card tight p-bottom">
+      <p class="eyebrow">장비</p>
+      <% game.equipmentOf(c).forEach(function (s) { %>
+        <div class="equip-item"><div class="equip-row"><span class="muted small"><%= s.name %></span><% if (s.item) { %><b title="<%= s.item.desc %>"><%= s.item.name %><% if (s.key === 'weapon' && game.weaponLevel(c)) { %> +<%= game.weaponLevel(c) %><% } %><% if (s.item.effects && s.item.effects.revive) { %> <span class="small revive">귀환 <%= game.reviveLeft(c) %>/<%= s.item.effects.revive %></span><% } %></b><% } else { %><span class="muted small">—</span><% } %></div>
+        <% var est = game.equipStatText(c, s); %><% if (s.item && s.item.desc) { %><p class="equip-desc"><%= s.item.desc %></p><% } %><% if (est) { %><p class="equip-stat"><%= est %></p><% } %></div>
+      <% }) %>
+    </section>
+
+    <section class="card tight p-bottom">
+      <p class="eyebrow">칭호</p>
+      <% C.SPECIAL_STATS.forEach(function (s) { %>
+        <div class="stat-head special"><span><%= s.name %></span><b><%= c[s.key] || 0 %></b></div>
+      <% }) %>
+      <% if (records.length) { %>
+        <div class="chips"><% records.forEach(function (r) { %><span class="tag title-tag"><%= r %></span><% }) %></div>
+      <% } else { %><p class="muted small">아직 얻은 칭호가 없어요</p><% } %>
+    </section>
+  </aside>
+
+  <!-- 오른쪽: 인생 로그 + 할 일 -->
+  <section class="story">
+    <!-- 휴대폰: 대화 상자 바로 위에 HP·피로도·골드 한 줄 (사용자 요청 2026-11-23: HP 를 바로바로 확인) -->
+    <div class="mobile-hud">
+      <span class="hud-hp <%= hpNow <= hpMax * 0.3 ? 'warn' : '' %>">HP <b><%= hpNow %></b> / <%= hpMax %></span>
+      <span class="hud-bar"><span style="width: <%= Math.round(hpNow / hpMax * 100) %>%"></span></span>
+      <% if (c.phase === 'adult') { %><span class="hud-sub <%= c.fatigue >= C.FATIGUE.questLimit ? 'warn' : '' %>">피로 <%= c.fatigue %></span><% } %>
+      <span class="hud-sub">골드 <%= c.gold %></span>
+    </div>
+    <div class="log" id="log">
+      <% var lastLabel = null, usesFx = false; logs.forEach(function (l) {
+           var isNew = l.id > seenId;
+           var m = /^\[(성공|실패)\] /.exec(l.text);
+           var body = m ? l.text.slice(m[0].length) : l.text;
+           body = body.replace(/\{비주얼노벨:[^}]*\}/g, '');
+           body = body.replace(/\{연출:(합|태양)\}/g, function (all, k) { if (!isNew) return ''; usesFx = true; return k === '합' ? '\uE001' : '\uE002'; }); %>
+        <% if (l.label !== lastLabel) { lastLabel = l.label; %><div class="divider<%= isNew ? ' new' : '' %>"><span><%= l.label %></span></div><% } %>
+        <p class="line <%= l.kind %><%= isNew ? ' new' : '' %>"><% if (m) { %><span class="verdict <%= m[1] === '성공' ? 'ok' : 'fail' %>"><%= m[1] %></span> <% } %><%= body %></p>
+      <% }) %>
+    </div>
+    <div class="speed-bar" id="speedBar">
+      <span class="small muted">글 속도</span>
+      <button type="button" data-speed="1">1×</button><button type="button" data-speed="2">2×</button><button type="button" data-speed="3">3×</button><button type="button" data-speed="4">4×</button>
+    </div>
+
+    <div class="actions card" id="actions">
+      <% if (training) { %>
+        <!-- 단련: 몬스터 없이 중앙을 꾹 누르기 -->
+        <p class="eyebrow"><%= game.timeLabel(c) %> · 단련 「<%= training.title %>」</p>
+        <div class="combat" id="combat">
+          <canvas id="trainCanvas" width="720" height="420" aria-label="단련 화면"></canvas>
+          <div class="combat-overlay" id="trainOverlay">
+            <p class="combat-title"><%= training.title %></p>
+            <p class="small">화면 가운데의 마법진을 <b>꾹 누르고</b> 있으면 마나가 모여 구체가 커져요.<br>손을 떼면 조금씩 흩어져요.</p>
+            <button type="button" class="primary" id="trainStart">시작</button>
+          </div>
+        </div>
+        <form method="post" action="/play/<%= c.id %>/train/done" id="trainForm"><input type="hidden" name="held" id="trainHeld"></form>
+        <script id="trainPlan" type="application/json"><%- JSON.stringify({ holdMs: training.holdMs, bg: C.COMBAT.background }).replace(/</g, '\\u003c') %></script>
+        <script src="/sfx.js"></script>
+        <script src="/training.js"></script>
+
+      <% } else if (combat) { %>
+        <!-- 전투 (패링): 스토리 전투 · 승급 시험 · 협동 의뢰 공통 -->
+        <p class="eyebrow"><%= game.timeLabel(c) %> · <%= combat.title ? combat.title + ' · ' : '' %>전투 「<%= combat.enemy.name %>」</p>
+        <div class="combat" id="combat">
+          <canvas id="combatCanvas" width="720" height="420" aria-label="전투 화면"></canvas>
+          <div class="combat-overlay" id="combatOverlay">
+            <p class="combat-title"><%= combat.enemy.name %></p>
+            <p class="small">화면 곳곳에 <b>붉은 고리</b>(공격 전조)가 나타나 안쪽 원으로 줄어들어요.<br>
+              고리가 원에 맞닿는 순간 그 원을 <b>클릭하거나 터치</b>하면 막아 내고, 곧바로 반격해요.</p>
+            <% if (combat.enemy.manaShield) { %><p class="small mana-note">마나에 비례해서 받는 데미지가 감소합니다.</p><% } %>
+            <% if (combat.enemy.counterFixed) { %><p class="small bleed-note">칼날로는 흠집 정도밖에 낼 수 없어요 (반격 피해 <%= combat.enemy.counterFixed %>). 출혈로 쓰러뜨려야 해요.</p><% } %>
+            <% if (combat.enemy.endless) { %><p class="small"><b>둘 중 하나가 쓰러질 때까지</b> 싸워요. (적 체력 <%= combat.enemy.hp %>)</p><% } else if (combat.enemy.mustKill) { %><p class="small"><b>공격 <%= combat.attacks.length %>번 안에 체력 <%= combat.enemy.hp %>을 모두 깎아야</b> 이겨요.</p><% } %>
+            <p class="small" id="combatKeyNote" hidden>원 가운데 적힌 <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> 중 그 키를 눌러 막아요. 한글 입력 상태여도 돼요.</p>
+            <p class="small muted">Just Guard ×<%= combat.mult.perfect %> · Guard ×<%= combat.mult.great %> · Miss ×<%= combat.mult.good %> 반격 · 못 막으면 피해를 입어요</p>
+            <div class="mode-pick" role="group" aria-label="조작 방식">
+              <button type="button" class="mode on" data-mode="click" aria-pressed="true">클릭 · 터치</button>
+              <button type="button" class="mode" data-mode="key" aria-pressed="false">키보드 (QWER)</button>
+              <button type="button" class="mode sfx-toggle" data-sfx-toggle aria-pressed="true">🔊 효과음 켜짐</button>
+            </div>
+            <label class="sfx-volume">효과음 크기 <input type="range" min="0" max="100" step="5" data-sfx-volume aria-label="효과음 크기"> <span data-sfx-volume-label>80%</span></label>
+            <button type="button" class="primary" id="combatStart">전투 시작</button>
+          </div>
+        </div>
+        <form method="post" action="<%= combatAction %>" id="combatForm"><input type="hidden" name="offsets" id="combatOffsets"></form>
+        <script id="combatPlan" type="application/json"><%- JSON.stringify(combat).replace(/</g, '\\u003c') %></script>
+        <script src="/sfx.js"></script>
+        <script src="/combat.js"></script>
+
+      <% } else if (event) { %>
+        <!-- 선택을 기다리는 이벤트 (나갔다 와도 여기서 이어짐) -->
+        <p class="eyebrow"><%= game.timeLabel(c) %> · <%= event.type === '메인스토리' ? '메인 스토리 「' + event.title + '」' : event.title %></p>
+        <% if (npc) { %><p class="npc-line"><span class="npc-name"><%= npc.name %></span><% if (npc.role) { %> <span class="muted small"><%= npc.role %></span><% } %></p><% } %>
+        <% var vn = game.vnFor(event, c); if (vn) { %>
+          <!-- 비주얼노벨 (data/vn/<%= vn.id %>.txt) — 다 보면 아래 선택지가 나타남 -->
+          <div class="vn" id="vn">
+            <div class="vn-bg"></div><div class="vn-bg vn-bg-next"></div>
+            <div class="vn-char"></div>
+            <div class="vn-shade"></div>
+            <div class="vn-box narration"><p class="vn-name" hidden></p><p class="vn-text"></p><span class="vn-more" hidden>▼</span></div>
+            <div class="vn-choices" hidden></div>
+            <button type="button" class="primary vn-start">이야기 듣기</button>
+            <% if (vn.errors.length && process.env.NODE_ENV !== 'production') { %><p class="vn-errors"><%= vn.errors.join(' · ') %></p><% } %>
+          </div>
+          <script type="application/json" id="vnScript"><%- JSON.stringify({ ops: vn.ops, labels: vn.labels }).replace(/</g, '\\u003c') %></script>
+          <p class="small muted vn-help">클릭 · 스페이스 · 엔터로 넘겨요.</p>
+        <% } %>
+        <div id="vnChoices" <%= vn ? 'hidden' : '' %>>
+        <p class="small muted">무엇을 할까?</p>
+        <form method="post" action="/play/<%= c.id %>/choice" class="stack">
+          <% choices.forEach(function (ch) { %>
+            <button name="choice" value="<%= ch.index %>" class="choice<%= ch.lock ? ' locked' : '' %>" <%= ch.affordable && !ch.lock ? '' : 'disabled' %>
+              <% if (ch.death) { %>onclick="return confirm('실패하면 <%= ch.death %>% 확률로 사망합니다. 정말 이렇게 할까요?')"<% } %>>
+              <span><%= ch.text %><% if (ch.cost) { %> <span class="price">골드 <%= ch.cost %></span><% } %></span>
+              <% if (ch.lock) { %><span class="small warn">🔒 <%= ch.lock.label %> 필요</span><% } %>
+              <% if (!ch.affordable) { %><span class="small warn">골드가 부족해요 (보유 <%= c.gold %>)</span><% } %>
+              <% if (ch.statLabel) { %>
+                <span class="small muted"><%= ch.statLabel %> 판정 · 성공률 <%= ch.chance %>%<% if (ch.death) { %> · <span class="warn">실패 시 사망 <%= ch.death %>%</span><% } %></span>
+              <% } %>
+            </button>
+          <% }) %>
+        </form>
+        </div>
+        <% if (vn) { %><% if (!usesFx) { %><script src="/sfx.js"></script><script src="/storyfx.js"></script><% } %><script src="/vn.js" defer></script><% } %>
+
+      <% } else if (c.phase === 'growth') { %>
+        <p class="muted small"><%= C.ADULT_AGE %>세가 되면 어른이 됩니다. 지금 <%= c.age %>세.</p>
+        <form method="post" action="/play/<%= c.id %>/next-year">
+          <button class="primary wide" autofocus>다음 해 →</button>
+        </form>
+
+      <% } else if (c.phase === 'bonus') { %>
+        <p class="eyebrow">2단계 끝 · 스스로 다듬기</p>
+        <p>보너스 포인트 <b><%= c.bonus_points %>점</b>을 원하는 능력치에 나눠 주세요.</p>
+        <form method="post" action="/play/<%= c.id %>/bonus" class="bonus-grid">
+          <% C.STATS.forEach(function (s) { %>
+            <label><%= s.name %> <span class="muted small">(<%= c[s.key] %>)</span>
+              <input type="number" name="<%= s.key %>" min="0" max="<%= c.bonus_points %>" value="0">
+            </label>
+          <% }) %>
+          <button class="primary">확정</button>
+        </form>
+
+      <% } else if (c.phase === 'job') { %>
+        <p class="eyebrow">3단계 · 모험 시작</p>
+        <p>어떤 길을 걸을까요? 능력치로 보면 <b><%= recommended[0] %></b>이(가) 잘 맞아 보여요.</p>
+        <form method="post" action="/play/<%= c.id %>/job" class="options">
+          <% C.JOBS.forEach(function (j) { %>
+            <button name="job" value="<%= j.name %>" class="option-btn <%= j.name === recommended[0] ? 'recommended' : '' %>">
+              <b><%= j.name %></b>
+              <span class="muted small">주 능력치 <%= game.statName(j.mainStat) %> · <%= j.ranks.join(' → ') %></span>
+            </button>
+          <% }) %>
+        </form>
+
+      <% } else if (c.phase === 'adult') { %>
+        <div class="adult">
+          <!-- 메인 스토리 -->
+          <% if (story) { %>
+            <div class="story-card <%= story.next ? 'ready' : '' %>">
+              <div class="promo-head">
+                <div>
+                  <p class="eyebrow">메인 스토리 · <%= story.rank %> 등급</p>
+                  <% if (story.empty) { %>
+                    <p class="small muted">이 등급의 이야기는 아직 준비 중이에요.</p>
+                  <% } else if (story.next) { %>
+                    <p class="story-next"><%= story.next.title %></p>
+                    <% if (story.next.gate) { %><p class="small <%= story.next.gate.ok ? 'ok-text' : 'warn' %>">조건 · <%= story.next.gate.text %> <span class="muted">(<%= story.next.gate.now %>)</span></p><% } %>
+                    <% if (story.next.reqs.length) { %>
+                      <p class="small">필요 능력치 · <% story.next.reqs.forEach(function (r, i) { %><%= i ? ', ' : '' %><span class="<%= r.ok ? 'ok-text' : 'warn' %>"><%= r.name %> <%= r.have %>/<%= r.need %></span><% }) %></p>
+                    <% } %>
+                  <% } else { %>
+                    <p class="small">이 등급의 이야기를 모두 마쳤어요.</p>
+                  <% } %>
+                </div>
+                <% if (!story.empty) { %><span class="small muted"><%= story.doneCount %> / <%= story.chapters.length %></span><% } %>
+              </div>
+              <% if (!story.empty) { %>
+                <ol class="chapter-dots">
+                  <% story.chapters.forEach(function (ch) { %><li class="<%= ch.done ? 'done' : (story.next && ch.id === story.next.id ? 'now' : '') %>" title="<%= ch.title %>"></li><% }) %>
+                </ol>
+              <% } %>
+              <% if (story.next) { %>
+                <form method="post" action="/play/<%= c.id %>/story">
+                  <button class="primary wide" <%= (!story.next.ready || (!C.STORY.ignoreFatigue && c.fatigue >= C.FATIGUE.questLimit)) ? 'disabled' : '' %>><%= story.next.ready ? '이야기 이어가기' : (story.next.gate && !story.next.gate.ok) ? (story.next.gate.ageOk ? '조건을 채우면 이어갈 수 있어요 · 협동 의뢰로 올리세요' : '나이 제한으로 이어갈 수 없어요') : '능력치가 부족해요 · 협동 의뢰로 올리세요' %></button>
+                </form>
+              <% } %>
+            </div>
+          <% } %>
+
+          <!-- 승급 시험 -->
+          <% if (promo && !game.adultOpen(c)) { %>
+            <%# 왕도 첫 이야기를 마치기 전에는 승급 시험을 안 보여 줌 %>
+          <% } else if (promo && promo.maxed) { %>
+            <div class="promo maxed"><b>최고 등급 · <%= promo.rank %></b> <span class="muted small">더 오를 등급이 없어요</span></div>
+          <% } else if (promo) { %>
+            <div class="promo <%= promo.canTry ? 'ready' : '' %>">
+              <div class="promo-head">
+                <div>
+                  <p class="eyebrow">승급 시험 · <%= promo.from %> → <%= promo.to %></p>
+                  <p class="small muted promo-text"><%= promo.text %></p>
+                </div>
+              </div>
+              <% if (promo.survive) { %>
+                <p class="small">시험은 <b><%= promo.enemy %></b> · 적 없이 쏟아지는 공격을 끝까지 막아 내면 합격 · 떨어져도 다시 도전할 수 있어요</p>
+              <% } else { %>
+                <p class="small">시험은 전투예요 · 상대 <b><%= promo.enemy %></b> · 반드시 쓰러뜨려야 합격 · 떨어져도 다시 도전할 수 있어요</p>
+              <% } %>
+              <% if (promo.manaShield) { %><p class="small mana-note">마나에 비례해서 받는 데미지가 감소합니다. <span class="muted">(지금 마나 <%= c.mana || 0 %>)</span></p><% } %>
+              <form method="post" action="/play/<%= c.id %>/promote">
+                <button class="primary wide" <%= promo.canTry ? '' : 'disabled' %>
+                  <% if (promo.canTry) { %>onclick="return confirm('<%= promo.to %> 승급 시험에 도전할까요? 바로 전투가 시작돼요.')"<% } %>>
+                  <%= promo.waiting ? '다음 메인 스토리가 열리면 도전할 수 있어요' : !promo.storyDone ? '이 등급의 메인 스토리를 모두 마치면 도전할 수 있어요' : promo.tired ? '피로도가 높아 도전할 수 없어요' : '승급 시험 도전' %>
+                </button>
+              </form>
+            </div>
+          <% } %>
+
+          <% if (!game.adultOpen(c) && !coopRoom) { %>
+            <p class="small muted locked-note">왕도에서의 첫 이야기를 마치면 협동 의뢰 · 1인 격파 · 상점 · 승급 시험이 열려요.</p>
+          <% } else { %>
+          <!-- 협동 의뢰 -->
+          <div class="coop open">
+            <p class="eyebrow">협동 의뢰 <span class="muted small">· 능력치를 올리는 길 · 체력을 인원수만큼 나눠 각자 자기 몫을 깎아요</span></p>
+            <% if (coopRoom) { var R = coopRoom; %>
+              <p><b><%= R.quest.title %></b>
+                <span class="muted small">· <%= R.is_private ? '비공개 · ' : '공개 · ' %><%= R.status === 'open' ? '모집 중 ' + R.members.length + '/' + C.COOP.maxMembers : R.round + '번째 도전 · 1인당 ' + R.share %></span></p>
+              <% if (R.is_private && R.status === 'open') { %>
+                <p class="room-code">방 코드 <b><%= R.code %></b> <span class="muted small">· 함께할 사람에게 알려 주세요</span></p>
+              <% } %>
+              <ul class="coop-members">
+                <% R.members.forEach(function (m) {
+                     var label = { joined: '대기', fighting: '전투 전', won: '성공', lost: '실패', spectating: '구경' }[m.state] || m.state; %>
+                  <li class="st-<%= m.state %>"><span><%= m.name %><% if (m.character_id === R.leader_id) { %> <span class="muted small">방장</span><% } %><% if (m.character_id === c.id) { %> <span class="muted small">나</span><% } %></span><b><%= label %></b></li>
+                <% }) %>
+              </ul>
+              <% if (R.status === 'open') { %>
+                <div class="row tight">
+                  <% if (R.isLeader) { %>
+                    <form method="post" action="/play/<%= c.id %>/coop/start" data-once><button class="primary" <%= R.canStart ? '' : 'disabled' %>><%= R.canStart ? '의뢰 시작' : C.COOP.minMembers + '명 이상 모이면 시작' %></button></form>
+                  <% } else { %><span class="small muted">방장이 시작하기를 기다리는 중…</span><% } %>
+                  <form method="post" action="/play/<%= c.id %>/coop/leave"><button>나가기</button></form>
+                </div>
+              <% } else if (R.myTurn) { %>
+                <p class="small">내 몫: <%= R.quest.title.replace(/ 토벌$/, '') %>의 체력 <b><%= R.share %></b>을 깎아야 해요. 피로도 +<%= C.COOP.fatigue %></p>
+                <div class="row tight">
+                  <a class="button primary" href="/play/<%= c.id %>?fight=coop">내 몫 전투하기</a>
+                  <form method="post" action="/play/<%= c.id %>/coop/giveup" onsubmit="return confirm('포기하면 구경꾼이 되고, 남은 동료들이 다시 나눠 싸워야 해요. 포기할까요?')"><button>포기</button></form>
+                </div>
+              <% } else { %>
+                <p class="small muted"><%= R.me && R.me.state === 'spectating' ? '물러나서 동료들의 싸움을 지켜보는 중…' : '내 몫은 끝냈어요. 동료들을 기다리는 중…' %></p>
+              <% } %>
+              <% if (!R.myTurn) { %><script>setTimeout(function () { if (!document.hidden) location.reload(); }, 15000);</script><% } %>
+            <% } else { %>
+              <% if (c.fatigue >= C.FATIGUE.questLimit) { %><p class="warn small">피로도가 <%= C.FATIGUE.questLimit %> 이상이라 협동 의뢰를 받을 수 없어요.</p><% } %>
+              <p class="small muted">모집 중인 공개 파티</p>
+              <% if (!coopOpen.length) { %><p class="small muted">· 지금은 없어요</p><% } %>
+              <% if (coopOpen.length) { %>
+                <form method="post" action="/play/<%= c.id %>/coop/join" class="quests" data-once>
+                  <% coopOpen.forEach(function (r) { %>
+                    <button name="room" value="<%= r.id %>" class="quest" <%= (r.cnt >= C.COOP.maxMembers || c.fatigue >= C.FATIGUE.questLimit || (r.quest && c.rank_level < r.quest.minRank)) ? 'disabled' : '' %>>
+                      <b><%= r.quest ? r.quest.title : r.quest_id %></b>
+                      <span class="small muted">방장 <%= r.leader_name || '?' %> · <%= r.cnt %>/<%= C.COOP.maxMembers %>명</span>
+                    </button>
+                  <% }) %>
+                </form>
+              <% } %>
+              <form method="post" action="/play/<%= c.id %>/coop/code" class="code-join">
+                <input name="code" maxlength="10" placeholder="비공개 방 코드" autocomplete="off" style="text-transform: uppercase">
+                <button <%= c.fatigue >= C.FATIGUE.questLimit ? 'disabled' : '' %>>코드로 들어가기</button>
+              </form>
+              <p class="small muted">새 파티 모집</p>
+              <form method="post" action="/play/<%= c.id %>/coop/create" class="quests" data-once>
+                <label class="small private-toggle"><input type="checkbox" name="private" value="1"> 비공개 (목록에 안 보이고, 방 코드를 아는 사람만 들어올 수 있어요)</label>
+                <% coopQuests.forEach(function (q) { %>
+                  <button name="quest" value="<%= q.id %>" class="quest" <%= (q.locked || c.fatigue >= C.FATIGUE.questLimit) ? 'disabled' : '' %>>
+                    <b><%= q.title %></b>
+                    <span class="small muted"><%= q.text %></span>
+                    <span class="small"><%= q.enemyName %> 체력 <%= q.totalHp %> · <%= C.COOP.minMembers %>~<%= C.COOP.maxMembers %>명 · 성공 시 주 능력치 +<%= q.reward.main %><%= q.reward.others ? ', 나머지 +' + q.reward.others : '' %>, 골드 +<%= q.reward.gold %> · 피로도 +<%= C.COOP.fatigue %><% if (q.locked) { %> · 등급 부족<% } %></span>
+                  </button>
+                <% }) %>
+              </form>
+            <% } %>
+          </div>
+
+          <!-- 1인 격파 (혼자 하는 토벌 전투) -->
+          <div>
+            <p class="eyebrow">1인 격파 <span class="muted small">· 혼자 하는 토벌 · 시간은 지나지 않아요 · 피로도 +<%= C.SOLO.fatigue %></span></p>
+            <% if (c.fatigue >= C.FATIGUE.questLimit) { %>
+              <p class="warn small">피로도가 <%= C.FATIGUE.questLimit %> 이상이라 도전할 수 없어요. 쉬거나 상점에서 회복하세요.</p>
+            <% } %>
+            <form method="post" action="/play/<%= c.id %>/hunt" class="quests">
+              <% hunts.forEach(function (h) { %>
+                <button name="hunt" value="<%= h.id %>" class="quest" <%= (h.locked || c.fatigue >= C.FATIGUE.questLimit) ? 'disabled' : '' %>>
+                  <b><%= h.title %></b>
+                  <span class="small muted"><%= h.text %></span>
+                  <span class="small"><%= h.enemyName %> 체력 <%= h.hp %> · 성공 시 주 능력치 +<%= h.reward.main %><%= h.reward.others ? ', 나머지 +' + h.reward.others : '' %>, 골드 +<%= h.reward.gold %><% if (h.locked) { %> · 등급 부족<% } %></span>
+                </button>
+              <% }) %>
+            </form>
+            <% if (trainings.length) { %>
+              <form method="post" action="/play/<%= c.id %>/train" class="quests" style="margin-top: 8px">
+                <% trainings.forEach(function (t) { %>
+                  <button name="training" value="<%= t.id %>" class="quest" <%= c.fatigue >= C.FATIGUE.questLimit ? 'disabled' : '' %>>
+                    <b><%= t.title %> <span class="small muted"><%= t.job %> 전용</span></b>
+                    <span class="small muted"><%= t.text %></span>
+                    <span class="small">몬스터 없음 · <%= t.effectText %> · 피로도 +<%= t.fatigue %></span>
+                  </button>
+                <% }) %>
+              </form>
+            <% } %>
+          </div>
+
+          <div>
+            <p class="eyebrow">상점 <span class="muted small">· 시간은 지나지 않아요 · 보유 <%= c.gold %>골드</span></p>
+            <form method="post" action="/play/<%= c.id %>/buy" class="quests">
+              <% items.forEach(function (it) { %>
+                <button name="item" value="<%= it.id %>" class="quest" <%= (it.locked || it.left === 0 || c.gold < it.price) ? 'disabled' : '' %>>
+                  <b><%= it.name %> <span class="price"><%= it.price %>골드</span></b>
+                  <span class="small muted"><%= it.desc %></span>
+                  <span class="small"><%= it.effectText %><% if (it.left !== null) { %> · 이번 계절 <%= it.left %>개 남음<% } %><% if (it.locked) { %> · 등급 부족<% } %></span>
+                </button>
+              <% }) %>
+            </form>
+          </div>
+
+          <% } %>
+
+          <form method="post" action="/play/<%= c.id %>/rest">
+            <button class="wide">한 계절 쉬기 <span class="muted small">피로도 <%= C.REST.fatigue %> · 계절이 지남</span></button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+  </section>
+</div>
+<% if (usesFx) { %><% if (!combat) { %><script src="/sfx.js"></script><% } %><script src="/storyfx.js"></script><% } %>
+<script src="/typewriter.js"></script>
+<script>
+  // 두 번 눌러 같은 요청이 두 번 가지 않게 (협동 방이 겹쳐 생기던 문제)
+  document.addEventListener('submit', function (e) {
+    var f = e.target; if (!f.hasAttribute || !f.hasAttribute('data-once')) return;
+    if (f.dataset.sent) { e.preventDefault(); return; }
+    f.dataset.sent = '1';
+    setTimeout(function () { Array.prototype.forEach.call(f.querySelectorAll('button'), function (b) { b.disabled = true; }); }, 0);
+  });
+</script>
+<%- include('partials/foot') %>

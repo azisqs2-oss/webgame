@@ -1,0 +1,15 @@
+<%- include('partials/head', { title: '테스트 결과' }) %>
+<section class="test-page">
+  <div class="card">
+    <p class="eyebrow">테스트 결과 · 저장 안 함</p>
+    <h3><%= plan.enemy.name %> — <%= sim.rescued ? '난입' + (plan.enemy.rescueName ? ' (' + plan.enemy.rescueName + ')' : '') : sim.win ? '승리' : '패배' %></h3>
+    <p>남은 HP <b><%= sim.php %></b> / <%= plan.player.maxHp %> · 적 남은 체력 <b><%= sim.ehp %></b> / <%= plan.enemy.hp %> · 판정한 공격 <%= sim.used %>번</p>
+    <p class="small">Just Guard <%= sim.counts.perfect %> · Guard <%= sim.counts.great %> · Miss <%= sim.counts.good %> · 못 막음 <%= sim.counts.miss %><% if (sim.bleedTotal) { %> · 출혈 피해 <%= sim.bleedTotal %><% } %></p>
+    <p class="test-links">
+      <a class="button primary" href="/test/combat/<%= s.enemy %><%= s.rescueNow ? '?rescue=1' : '' %><%= s.back ? (s.rescueNow ? '&' : '?') + 'back=' + s.back : '' %>">다시 싸우기</a>
+      <% if (s.back) { %><a class="button" href="/test/scene/<%= s.back %>">장면으로 돌아가기</a><% } %>
+      <a class="button" href="/test">테스트 처음으로</a>
+    </p>
+  </div>
+</section>
+<%- include('partials/foot') %>

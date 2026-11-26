@@ -1,0 +1,57 @@
+<%- include('partials/head', { title: '테스트' }) %>
+<%# 테스트 페이지 (test1 계정 전용) — 보기만 하고 저장하지 않음 %>
+<section class="test-page">
+  <h2>테스트</h2>
+  <p class="small muted">여기서 보는 전투·장면은 <b>미리보기</b>예요. 캐릭터와 DB에는 아무것도 저장되지 않아요.</p>
+
+  <div class="card">
+    <p class="eyebrow">미리보기 캐릭터</p>
+    <form method="post" action="/test/char" class="test-char">
+      <label>직업
+        <select name="job"><% C.JOBS.forEach(function (j) { %><option <%= tc.job === j.name ? 'selected' : '' %>><%= j.name %></option><% }) %></select>
+      </label>
+      <label>힘·지능·민첩성 <input type="number" name="stat" min="1" max="300" value="<%= tc.str %>"></label>
+      <label>마나(마법사) <input type="number" name="mana" min="0" max="50" value="<%= tc.mana || 5 %>"></label>
+      <button>바꾸기</button>
+    </form>
+    <p class="small muted">HP <%= game.maxHp(tc) %> · 공격력 <%= Math.round(game.attackPower(tc) * 10) / 10 %> · 장비 없음</p>
+  </div>
+
+  <div class="card">
+    <p class="eyebrow">왕도 이야기</p>
+    <div class="test-links">
+      <% scenes.chapters.forEach(function (s) { %><a class="button" href="/test/scene/<%= s.id %>"><%= s.order %>장 · <%= s.title %></a><% }) %>
+    </div>
+    <form method="get" action="/test/go" class="test-go">
+      <input name="id" placeholder="장면 ID (예: st_gold_1)" required>
+      <button>그 장면으로</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <p class="eyebrow">연출</p>
+    <div class="test-links">
+      <% scenes.sun.forEach(function (s) { %><a class="button" href="/test/scene/<%= s.id %>">태양 · <%= s.title %></a><% }) %>
+      <% scenes.clash.forEach(function (s) { %><a class="button" href="/test/scene/<%= s.id %>">칼부림 · <%= s.title %></a><% }) %>
+      <% scenes.vn.forEach(function (s) { %><a class="button" href="/test/scene/<%= s.id %>">비주얼노벨 · <%= s.title %></a><% }) %>
+    </div>
+    <p class="small muted">난입(맵 곳곳의 Just Guard 등)은 아래 전투에서 <b>난입 바로 보기</b>를 누르면 HP 1로 시작해 첫 공격에 바로 터져요.</p>
+  </div>
+
+  <div class="card">
+    <p class="eyebrow">전투</p>
+    <table class="test-table">
+      <thead><tr><th>적</th><th>체력</th><th></th></tr></thead>
+      <tbody>
+      <% enemies.forEach(function (e) { %>
+        <tr>
+          <td><b><%= e.name %></b> <span class="small muted"><%= e.id %></span></td>
+          <td><%= e.hp %></td>
+          <td class="test-btns"><a href="/test/combat/<%= e.id %>">싸우기</a><% if (e.rescue) { %> · <a href="/test/combat/<%= e.id %>?rescue=1">난입 바로 보기</a><% } %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<%- include('partials/foot') %>

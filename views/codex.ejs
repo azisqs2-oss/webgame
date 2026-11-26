@@ -1,0 +1,23 @@
+<%- include('partials/head', { title: '칭호 도감' }) %>
+<section class="card">
+  <p class="eyebrow">칭호 도감 · <%= got %> / <%= total %></p>
+  <h1>특별 칭호</h1>
+  <p class="muted small">한 번 얻으면 이 계정에서 새로 만드는 모든 캐릭터가 갖고 태어나는 칭호예요. 얻는 방법은 힌트로만 알 수 있어요.</p>
+  <ul class="codex-list">
+    <% list.forEach(function (b) { %>
+      <li class="<%= b.unlocked ? 'on' : '' %>">
+        <span class="codex-mark"><%= b.unlocked ? '✦' : '?' %></span>
+        <div>
+          <b>「<%= b.grant && b.grant.title ? b.grant.title : b.name %>」</b>
+          <p class="small hint">힌트 · <%= b.hint || '아직 알려진 것이 없다.' %></p>
+          <p class="small muted">조건 · 미공개</p>
+          <% if (b.unlocked) { %>
+            <p class="small"><%= b.by ? b.by + '(으)로 획득' : '획득함' %><% if (b.effectText) { %> · 효과 <%= b.effectText %><% } %></p>
+          <% } %>
+        </div>
+      </li>
+    <% }) %>
+  </ul>
+  <% if (!list.length) { %><p class="muted">아직 도감에 오른 칭호가 없어요.</p><% } %>
+</section>
+<%- include('partials/foot') %>

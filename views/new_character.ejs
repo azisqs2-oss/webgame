@@ -1,0 +1,77 @@
+<%- include('partials/head', { title: '캐릭터 만들기' }) %>
+<section class="card">
+  <p class="eyebrow">슬롯 <%= slot %> · 1단계 기본 설정</p>
+  <h1>누구로 태어날까요</h1>
+  <p class="muted">이름 외에는 비워 두면 무작위로 정해져요.</p>
+  <% if (unlocks.length) { %>
+    <div class="bonus-note">
+      <b>계정 보너스</b>
+      <% unlocks.forEach(function (b) { %>
+        <span class="small">· 「<%= b.grant.title || b.name %>」<% C.SPECIAL_STATS.concat(C.STATS).forEach(function (s) { if (b.grant[s.key]) { %> <%= s.name %> +<%= b.grant[s.key] %><% } }) %></span>
+      <% }) %>
+      <span class="muted small">을(를) 갖고 태어나요.</span>
+    </div>
+  <% } %>
+
+  <form method="post" action="/characters" class="stack">
+    <input type="hidden" name="slot" value="<%= slot %>">
+
+    <label>이름 <span class="muted small">(게시판 닉네임이 됩니다 · 2~12자)</span>
+      <input name="name" required minlength="2" maxlength="12">
+    </label>
+
+    <fieldset>
+      <legend>성별</legend>
+      <div class="chips">
+        <label class="chip"><input type="radio" name="gender" value="" checked> 무작위</label>
+        <% ['남성', '여성'].forEach(function (g) { %>
+          <label class="chip"><input type="radio" name="gender" value="<%= g %>"> <%= g %></label>
+        <% }) %>
+      </div>
+    </fieldset>
+
+
+    <fieldset>
+      <legend>태어날 마을 <span class="muted small">(마을이 시작 직업을 정해요 · 이후엔 전직으로만 바뀜)</span></legend>
+      <div class="options">
+        <label class="option"><input type="radio" name="village" value="" checked><b>무작위</b></label>
+        <% C.VILLAGES.forEach(function (v) { %>
+          <label class="option"><input type="radio" name="village" value="<%= v.name %>">
+            <% var vj = C.JOBS.find(function (j) { return j.name === v.job; }); %>
+            <b><%= v.name %></b><span class="job-pill"><%= v.job %></span><span class="muted small"><%= v.desc %></span>
+            <% if (vj && vj.desc) { %><span class="small job-desc"><%= v.job %> · <%= vj.desc %></span><% } %>
+          </label>
+        <% }) %>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>성격 태그 <span class="muted small">(2개까지 · 모자라면 무작위로 채움)</span></legend>
+      <div class="chips">
+        <% C.TAGS.forEach(function (t) { %>
+          <% var tb = Object.keys(t.bonus || {}).map(function (k) { var st = C.STATS.find(function (x) { return x.key === k; }); return (st ? st.name : k) + '+' + t.bonus[k]; }).join(' '); %>
+          <label class="chip"><input type="checkbox" name="tags" value="<%= t.name %>"> <%= t.name %><% if (tb) { %> <span class="muted small"><%= tb %></span><% } %></label>
+        <% }) %>
+      </div>
+    </fieldset>
+
+    <label>외형·성격 한 줄 소개 <span class="muted small">(선택 · 프로필에 표시)</span>
+      <textarea name="intro" maxlength="200" rows="2" placeholder="예: 늘 소매를 걷어붙이고 다니는 말수 적은 아이"></textarea>
+    </label>
+
+    <div class="row">
+      <a class="button" href="/slots">취소</a>
+      <button class="primary">태어나기</button>
+    </div>
+  </form>
+</section>
+<script>
+  // 성격 태그는 최대 2개까지만 체크되도록
+  document.querySelectorAll('input[name="tags"]').forEach(function (box) {
+    box.addEventListener('change', function () {
+      var checked = document.querySelectorAll('input[name="tags"]:checked');
+      if (checked.length > 2) box.checked = false;
+    });
+  });
+</script>
+<%- include('partials/foot') %>

@@ -1,0 +1,35 @@
+<%- include('partials/head', { title: '캐릭터 슬롯' }) %>
+<h1>캐릭터 슬롯</h1>
+<p class="muted">슬롯은 3개. 캐릭터가 죽거나 삭제되면 그 슬롯이 비워집니다.</p>
+<div class="slots">
+  <% slots.forEach(function (c, i) { %>
+    <article class="card slot">
+      <p class="eyebrow">슬롯 <%= i + 1 %></p>
+      <% if (c) { %>
+        <h2><%= c.name %></h2>
+        <p class="muted small"><%= c.origin %> 출신 · <%= c.gender %></p>
+        <p>
+          <% if (c.phase === 'adult') { %>
+            <%= c.job %> (<%= game.rankName(c) %>) · <%= game.timeLabel(c) %>
+          <% } else { %>
+            성장기 · <%= c.age %>세<% if (c.job) { %> · <%= c.job %> 지망<% } %>
+          <% } %>
+        </p>
+        <a class="button primary" href="/play/<%= c.id %>">이어하기</a>
+        <details class="danger-zone">
+          <summary>삭제</summary>
+          <form method="post" action="/characters/<%= c.id %>/delete" class="stack">
+            <label class="small">확인을 위해 이름 「<%= c.name %>」을 입력하세요
+              <input name="confirm_name" required>
+            </label>
+            <button class="danger">영구 삭제</button>
+          </form>
+        </details>
+      <% } else { %>
+        <h2 class="muted">빈 슬롯</h2>
+        <a class="button" href="/characters/new?slot=<%= i + 1 %>">새 캐릭터 만들기</a>
+      <% } %>
+    </article>
+  <% }) %>
+</div>
+<%- include('partials/foot') %>

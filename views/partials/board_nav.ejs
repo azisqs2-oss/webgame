@@ -1,0 +1,25 @@
+<%# 게시판 공통 상단: 게시판 탭 + 현재 캐릭터 선택 %>
+<div class="board-head">
+  <nav class="tabs">
+    <% Object.keys(BOARDS).forEach(function (k) { %>
+      <a href="/board?b=<%= k %>" class="tab <%= k === boardKey ? 'on' : '' %>"><%= BOARDS[k].name %></a>
+    <% }) %>
+  </nav>
+  <div class="as-char">
+    <% if (activeCharacter) { %>
+      <form method="post" action="/board/active" class="row tight">
+        <input type="hidden" name="back" value="<%= typeof back !== 'undefined' ? back : '/board?b=' + boardKey %>">
+        <label class="inline-label small muted" for="char-select">말하는 캐릭터</label>
+        <select id="char-select" name="character_id" onchange="this.form.submit()">
+          <% myCharacters.forEach(function (ch) { %>
+            <option value="<%= ch.id %>" <%= ch.id === activeCharacter.id ? 'selected' : '' %>><%= ch.name %></option>
+          <% }) %>
+        </select>
+        <noscript><button>바꾸기</button></noscript>
+      </form>
+      <a class="button small-btn" href="/play/<%= activeCharacter.id %>">← 게임으로</a>
+    <% } else { %>
+      <span class="muted small">캐릭터가 없어서 읽기만 할 수 있어요 · <a href="/slots">캐릭터 만들기</a></span>
+    <% } %>
+  </div>
+</div>

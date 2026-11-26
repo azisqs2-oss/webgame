@@ -1,0 +1,65 @@
+<%- include('partials/head', { title: p.name }) %>
+<% var records = game.csv(p.records); var maxStat = Math.max(100, p.str, p.intel, p.agi, p.cha); %>
+<section class="card profile">
+  <div class="profile-top">
+    <div>
+      <p class="eyebrow"><%= p.phase === 'adult' && p.job ? p.job + ' · ' + game.rankName(p) : '성장기 · ' + p.age + '세' %></p>
+      <h1><%= p.name %></h1>
+      <p class="muted small"><%= p.gender %> · <%= p.origin %> 출신 · <%= game.csv(p.tags).join('·') %></p>
+      <% if (p.intro) { %><p class="intro-text">“<%= p.intro %>”</p><% } else if (mine) { %><p class="muted small">아직 소개가 없어요.</p><% } %>
+      <% if (mine) { %>
+        <details class="intro-edit">
+          <summary class="small">소개 고치기</summary>
+          <form method="post" action="/profile/<%= p.id %>/intro">
+            <label class="small muted" for="introText">200자까지 · 게시판 닉네임을 누른 사람에게 보여요</label>
+            <textarea id="introText" name="intro" maxlength="200" rows="3" placeholder="예: 늘 소매를 걷어붙이고 다니는 말수 적은 아이"><%= p.intro %></textarea>
+            <button class="primary">저장</button>
+          </form>
+        </details>
+      <% } %>
+    </div>
+    <% if (mine) { %><a class="button" href="/play/<%= p.id %>">이 캐릭터로 플레이</a><% } %>
+  </div>
+
+  <div class="profile-grid">
+    <div>
+      <p class="eyebrow">칭호</p>
+      <% if (records.length) { %>
+        <div class="chips"><% records.forEach(function (r) { %><span class="tag"><%= r %></span><% }) %></div>
+      <% } else { %><p class="muted small">아직 없음</p><% } %>
+
+      <p class="eyebrow gap">장비</p>
+      <% game.equipmentOf(p).forEach(function (s) { %>
+        <div class="equip-item"><div class="equip-row"><span class="muted small"><%= s.name %></span><% if (s.item) { %><b title="<%= s.item.desc %>"><%= s.item.name %><% if (s.key === 'weapon' && game.weaponLevel(p)) { %> +<%= game.weaponLevel(p) %><% } %><% if (s.item.effects && s.item.effects.revive) { %> <span class="small revive">귀환 <%= game.reviveLeft(p) %>/<%= s.item.effects.revive %></span><% } %></b><% } else { %><span class="muted small">—</span><% } %></div>
+        <% var est = game.equipStatText(p, s); %><% if (s.item && s.item.desc) { %><p class="equip-desc"><%= s.item.desc %></p><% } %><% if (est) { %><p class="equip-stat"><%= est %></p><% } %></div>
+      <% }) %>
+
+      <p class="eyebrow gap">활동</p>
+      <p class="small">1인 격파 <b><%= p.solo_count %></b>회 · 협동 의뢰 <b><%= p.coop_count %></b>회
+        <% if (p.phase === 'adult') { %> · <%= game.timeLabel(p) %><% } %></p>
+    </div>
+    <div>
+      <p class="eyebrow">능력치</p>
+      <% C.STATS.forEach(function (s, i) { %>
+        <div class="stat">
+          <div class="stat-head"><span><%= s.name %></span><b><%= p[s.key] %></b></div>
+          <div class="bar"><div class="fill c<%= i %>" style="width: <%= Math.round(p[s.key] / maxStat * 100) %>%"></div></div>
+        </div>
+      <% }) %>
+      <% C.SPECIAL_STATS.forEach(function (s) { %>
+        <div class="stat-head special"><span><%= s.name %> <span class="muted small">칭호 전용</span></span><b><%= p[s.key] || 0 %></b></div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <p class="eyebrow">최근 쓴 글</p>
+  <% if (!recent.length) { %><p class="muted small">아직 쓴 글이 없어요.</p><% } %>
+  <ul class="post-list">
+    <% recent.forEach(function (r) { %>
+      <li><a class="post-title" href="/board/<%= r.id %>"><span class="muted small"><%= BOARDS[r.board] ? BOARDS[r.board].name : '' %></span> <%= r.title %><% if (r.comment_count) { %> <span class="count">[<%= r.comment_count %>]</span><% } %></a></li>
+    <% }) %>
+  </ul>
+</section>
+<%- include('partials/foot') %>

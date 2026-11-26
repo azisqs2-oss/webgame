@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= typeof title !== 'undefined' ? title + ' · ' : '' %>이름 없는 연대기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">이름 없는 연대기</a>
+  <% if (user) { %>
+    <nav>
+      <a href="/slots">캐릭터 슬롯</a>
+      <a href="/board?b=free">자유게시판</a>
+      <a href="/board?b=quest">의뢰게시판</a>
+      <% if (typeof smithyChar !== 'undefined' && smithyChar) { %><a href="/play/<%= smithyChar %>/smithy" data-modal="smithy">대장간</a><% } %>
+      <a href="/codex">칭호 도감</a>
+      <% if (typeof devMode !== 'undefined' && devMode) { %><a href="/data">데이터 확인</a><% } %>
+      <% if (typeof isTester !== 'undefined' && isTester) { %><a href="/test">테스트</a><% } %>
+      <span class="muted"><%= user.loginId %></span>
+      <form method="post" action="/logout" class="inline"><button class="link">로그아웃</button></form>
+    </nav>
+  <% } %>
+</header>
+<% if (flash) { %><div class="flash"><%= flash %></div><% } %>
+<main>

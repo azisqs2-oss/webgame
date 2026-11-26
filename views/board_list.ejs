@@ -1,0 +1,34 @@
+<%- include('partials/head', { title: BOARDS[boardKey].name }) %>
+<%- include('partials/board_nav') %>
+
+<section class="card">
+  <div class="row between">
+    <div>
+      <h1><%= BOARDS[boardKey].name %></h1>
+      <p class="muted small"><%= BOARDS[boardKey].desc %><% if (boardKey === 'quest') { %> · 파티 자동 모집은 협동 의뢰 단계에서 추가돼요<% } %></p>
+    </div>
+    <% if (activeCharacter) { %><a class="button primary" href="/board/write?b=<%= boardKey %>">글쓰기</a><% } %>
+  </div>
+
+  <% if (!posts.length) { %>
+    <p class="empty muted">아직 글이 없어요. 첫 이야기를 남겨 보세요.</p>
+  <% } else { %>
+    <ul class="post-list">
+      <% posts.forEach(function (row) { %>
+        <li>
+          <a class="post-title" href="/board/<%= row.id %>"><%= row.title %><% if (row.comment_count) { %> <span class="count">[<%= row.comment_count %>]</span><% } %></a>
+          <div class="post-meta"><%- include('partials/author', { row: row }) %><span class="muted small"><%= fmtTime(row.created_at) %></span></div>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+
+  <% if (pages > 1) { %>
+    <nav class="pager">
+      <% for (var i = 1; i <= pages; i++) { %>
+        <a href="/board?b=<%= boardKey %>&page=<%= i %>" class="<%= i === page ? 'on' : '' %>"><%= i %></a>
+      <% } %>
+    </nav>
+  <% } %>
+</section>
+<%- include('partials/foot') %>
